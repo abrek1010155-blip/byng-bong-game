@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BYNG BONG</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .balance {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .coin-container {
+            position: relative;
+            margin: 30px 0;
+        }
+        
+        .coin {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 60px rgba(0, 255, 136, 0.3);
+            border: 5px solid #00ff88;
+        }
+        
+        .coin:active {
+            transform: scale(0.95);
+        }
+        
+        .energy {
+            font-size: 18px;
+            margin: 20px 0;
+            color: #ffcc00;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .floating-text {
+            position: absolute;
+            color: #00ff88;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: float-up 1s ease-out forwards;
+        }
+        
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="balance" id="balance">0</div>
+        <div class="label">💰 BYNG BONG</div>
+    </div>
+    
+    <div class="coin-container">
+        <img src="coin.png" alt="NAHAR Coin" class="coin" id="coin">
+    </div>
+    
+    <div class="energy" id="energy">⚡ 1000/1000</div>
+    
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="tap-power">1</div>
+            <div class="stat-label">💪 Сила тапа</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="level">1</div>
+            <div class="stat-label">🏆 Уровень</div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        const userId = tg.initDataUnsafe?.user?.id;
+        const username = tg.initDataUnsafe?.user?.username;
+        
+        let balance = 0;
+        let energy = 1000;
+        let maxEnergy = 1000;
+        let tapPower = 1;
+        
+        // Загрузка данных (потом подключим к боту)
+        function loadData() {
+            balance = Math.floor(Math.random() * 1000);
+            document.getElementById('balance').textContent = balance.toLocaleString();
+            updateEnergy();
+        }
+        
+        function updateEnergy() {
+            document.getElementById('energy').textContent = `⚡ ${energy}/${maxEnergy}`;
+        }
+        
+        // Тап по монете
+        document.getElementById('coin').addEventListener('click', function(e) {
+            if (energy >= tapPower) {
+                balance += tapPower;
+                energy -= tapPower;
+                
+                document.getElementById('balance').textContent = balance.toLocaleString();
+                updateEnergy();
+                
+                // Анимация +1
+                const floatText = document.createElement('div');
+                floatText.className = 'floating-text';
+                floatText.textContent = '+' + tapPower;
+                floatText.style.left = (e.clientX - 20) + 'px';
+                floatText.style.top = (e.clientY - 20) + 'px';
+                document.body.appendChild(floatText);
+                
+                setTimeout(() => floatText.remove(), 1000);
+                
+                // Вибрация
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            }
+        });
+        
+        // Авто-восстановление энергии
+        setInterval(() => {
+            if (energy < maxEnergy) {
+                energy = Math.min(energy + 1, maxEnergy);
+                updateEnergy();
+            }
+        }, 1000);
+        
+        loadData();
+    </script>
+</body>
+</html>
